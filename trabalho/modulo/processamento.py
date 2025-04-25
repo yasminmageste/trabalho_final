@@ -17,7 +17,7 @@ def extrair_dados_da_imagem(imagem):
         tornozelo = resultado.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_ANKLE]
         altura_total = round(abs(tornozelo.y - topo.y), 2)
         medidas['altura_total'] = altura_total
-        # Disância entre os ombros
+        # Distância entre os ombros
         l_shoulder = resultado.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER]
         r_shoulder = resultado.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER]
         dx = (l_shoulder.x - r_shoulder.x)
