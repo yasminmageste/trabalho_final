@@ -1,6 +1,6 @@
-import cv2 #manipula imagens_roupas
-import mediapipe as mp #detecta as partes do corpo
-import numpy as np
+import cv2 # Manipula imagens_roupas
+import mediapipe as mp # Detecta as partes do corpo
+import numpy as np # Calcula distâncias
 
 
 def extrair_dados_da_imagem(imagem):
@@ -12,7 +12,7 @@ def extrair_dados_da_imagem(imagem):
         resultado = pose.process(img_rgb) # Processa a imagem
 
     if resultado.pose_landmarks:
-        # Altura total (cabea ao tonozelo)
+        # Altura total (cabeça ao tonozelo)
         topo = resultado.pose_landmarks.landmark[mp_pose.PoseLandmark.NOSE]  # ou .LEFT_EYE
         tornozelo = resultado.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_ANKLE]
         altura_total = round(abs(tornozelo.y - topo.y), 2)
@@ -24,7 +24,7 @@ def extrair_dados_da_imagem(imagem):
         dy = (l_shoulder.y - r_shoulder.y)
         distancia = round(np.sqrt(dx**2 + dy**2), 2)
         medidas['largura_ombros'] = distancia
-        # Proporçã rnco e perna
+        # Proporção tronco e perna
         ombro = resultado.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER]
         quadril = resultado.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_HIP]
         tornozelo = resultado.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_ANKLE]
