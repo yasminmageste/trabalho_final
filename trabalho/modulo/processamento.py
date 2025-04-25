@@ -4,27 +4,27 @@ import numpy as np
 
 
 def extrair_dados_da_imagem(imagem):
-    #recebe uma imagem (formato BGR do OpenCV) e retorna um dicionário com medidas extraídas dela
+    # Recebe uma imagem (formato BGR do OpenCV) e retorna um dicionário com medidas extraídas dela
     mp_pose = mp.solutions.pose
     medidas = {}
     with mp_pose.Pose(static_image_mode=True) as pose:
-        img_rgb = cv2.cvtColor(imagem, cv2.COLOR_BGR2RGB) #Converte a imagem de BGR (formato padrão do OpenCV) para RGB (formato exigido pelo MediaPipe)
-        resultado = pose.process(img_rgb) #Processa a imagem
+        img_rgb = cv2.cvtColor(imagem, cv2.COLOR_BGR2RGB) # Converte a imagem de BGR (formato padrão do OpenCV) para RGB (formato exigido pelo MediaPipe)
+        resultado = pose.process(img_rgb) # Processa a imagem
 
     if resultado.pose_landmarks:
-        # ALTURA TOTAL (CABEÇA AO TORNOZELO)
+        # Altura total (cabea ao tonozelo)
         topo = resultado.pose_landmarks.landmark[mp_pose.PoseLandmark.NOSE]  # ou .LEFT_EYE
         tornozelo = resultado.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_ANKLE]
         altura_total = round(abs(tornozelo.y - topo.y), 2)
         medidas['altura_total'] = altura_total
-        # DISTANCIA_OMBROS
+        # Disância entre os ombros
         l_shoulder = resultado.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER]
         r_shoulder = resultado.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER]
         dx = (l_shoulder.x - r_shoulder.x)
         dy = (l_shoulder.y - r_shoulder.y)
         distancia = round(np.sqrt(dx**2 + dy**2), 2)
         medidas['largura_ombros'] = distancia
-        #PROPORÇÃO TRONCO E PERNA
+        # Proporçã rnco e perna
         ombro = resultado.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER]
         quadril = resultado.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_HIP]
         tornozelo = resultado.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_ANKLE]
