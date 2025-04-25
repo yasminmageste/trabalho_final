@@ -3,7 +3,6 @@ import mediapipe as mp #detecta as partes do corpo
 import numpy as np
 
 
-
 def extrair_dados_da_imagem(imagem):
     #recebe uma imagem (formato BGR do OpenCV) e retorna um dicionário com medidas extraídas dela
     mp_pose = mp.solutions.pose
@@ -12,40 +11,45 @@ def extrair_dados_da_imagem(imagem):
         img_rgb = cv2.cvtColor(imagem, cv2.COLOR_BGR2RGB) #Converte a imagem de BGR (formato padrão do OpenCV) para RGB (formato exigido pelo MediaPipe)
         resultado = pose.process(img_rgb) #Processa a imagem
 
-    if resultado.pose_landmarks: #verifica se deu certo
+    if resultado.pose_landmarks:
         # ALTURA TOTAL (CABEÇA AO TORNOZELO)
         topo = resultado.pose_landmarks.landmark[mp_pose.PoseLandmark.NOSE]  # ou .LEFT_EYE
         tornozelo = resultado.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_ANKLE]
-        altura_total = abs(tornozelo.y - topo.y)
-        medidas['altura_total_normalizada'] = altura_total
+        altura_total = round(abs(tornozelo.y - topo.y), 2)
+        medidas['altura_total'] = altura_total
         # DISTANCIA_OMBROS
         l_shoulder = resultado.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER]
         r_shoulder = resultado.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER]
         dx = (l_shoulder.x - r_shoulder.x)
         dy = (l_shoulder.y - r_shoulder.y)
-        distancia = np.sqrt(dx**2 + dy**2)
-        medidas['largura_ombros_normalizada'] = distancia
+        distancia = round(np.sqrt(dx**2 + dy**2), 2)
+        medidas['largura_ombros'] = distancia
         #PROPORÇÃO TRONCO E PERNA
         ombro = resultado.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER]
         quadril = resultado.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_HIP]
         tornozelo = resultado.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_ANKLE]
         altura_tronco = abs(ombro.y - quadril.y)
         altura_pernas = abs(quadril.y - tornozelo.y)
-        proporcao_tronco_pernas = altura_tronco / altura_pernas
-        medidas['proporcao_tronco_pernas'] = proporcao_tronco_pernas
+        proporcao_tronco_pernas = round(altura_tronco / altura_pernas, 2)
+        medidas['proporção'] = proporcao_tronco_pernas
     else:
         print('nao deu certo os ombros')
 
-    # Tom de pele (média da cor de uma área central do rosto)
-    h, w, _ = imagem.shape #h= altura, w=altura, _=canal de cores(ignora)
-    # Região estimada do rosto — pode ser ajustada dependendo da imagem
-    rosto = imagem[int(h * 0.3):int(h * 0.5), int(w * 0.4):int(w * 0.6)]
+    h, w, _ = imagem.shape
+    # Usa o ponto do nariz como centro da área de amostragem
+    nariz = resultado.pose_landmarks.landmark[mp_pose.PoseLandmark.NOSE]
+    cx, cy = int(nariz.x * w), int(nariz.y * h)
+    # Define o tamanho da área ao redor do nariz (ex: 40x40 pixels)
+    offset = 20
+    x1, y1 = max(cx - offset, 0), max(cy - offset, 0)
+    x2, y2 = min(cx + offset, w), min(cy + offset, h)
+
+    rosto = imagem[y1:y2, x1:x2]
     if rosto.size > 0:
         tom_medio = np.mean(rosto, axis=(0, 1))  # BGR
-        medidas['tom_de_pele_bgr'] = tom_medio
+        medidas['tom_de_pele'] = tom_medio.astype(int)
     else:
-        print('não deu certo a cara')
-        return None
+        print('Não foi possível extrair o tom de pele')
 
     return medidas, resultado
 
@@ -65,11 +69,14 @@ def visualizar_resultados(imagem, resultado, tom_de_pele):
             mp_drawing.DrawingSpec(color=(255,0,0), thickness=2)
         )
 
-    # Retângulo do rosto (onde foi tirado o tom de pele)
-    h, w, _ = imagem.shape
-    x1, y1 = int(w * 0.4), int(h * 0.3)
-    x2, y2 = int(w * 0.6), int(h * 0.5)
-    cv2.rectangle(imagem_copy, (x1, y1), (x2, y2), (255, 255, 255), 2)
+        # Retângulo do rosto baseado no nariz
+        h, w, _ = imagem.shape
+        nariz = resultado.pose_landmarks.landmark[mp_pose.PoseLandmark.NOSE]
+        cx, cy = int(nariz.x * w), int(nariz.y * h)
+        offset = 20
+        x1, y1 = max(cx - offset, 0), max(cy - offset, 0)
+        x2, y2 = min(cx + offset, w), min(cy + offset, h)
+        cv2.rectangle(imagem_copy, (x1, y1), (x2, y2), (255, 255, 255), 2)
 
     # Caixinha com a cor média do tom de pele
     tom = tuple([int(c) for c in tom_de_pele])
