@@ -27,4 +27,4 @@ if __name__ == "__main__":
                 print(f'{k}:{v}')
 
             if 'tom_de_pele' in medidas:
-                visualizar_resultados(imagem, resultado, medidas['tom_de_pele'])
+                visualizar_resultados(imagem, resultado, medidas['tom_de_pele'], medidas['tom_de_cabelo'])
