@@ -51,9 +51,25 @@ def extrair_dados_da_imagem(imagem):
     else:
         print('Não foi possível extrair o tom de pele')
 
+    # Tom de cabelo (acima do nariz)
+    cx, cy = int(nariz.x * w), int(nariz.y * h)
+    offset_cabelo = 20
+    # Subir mais um pouco para garantir que estamos acima da testa
+    y1_cabelo = max(cy - 3 * offset_cabelo, 0)
+    y2_cabelo = max(cy - offset_cabelo, 0)
+    x1_cabelo = max(cx - offset_cabelo, 0)
+    x2_cabelo = min(cx + offset_cabelo, w)
+
+    cabelo = imagem[y1_cabelo:y2_cabelo, x1_cabelo:x2_cabelo]
+    if cabelo.size > 0:
+        tom_cabelo = np.mean(cabelo, axis=(0, 1))  # BGR
+        medidas['tom_de_cabelo'] = tom_cabelo.astype(int)
+    else:
+        print('Não foi possível extrair o tom do cabelo')
+
     return medidas, resultado
 
-def visualizar_resultados(imagem, resultado, tom_de_pele):
+def visualizar_resultados(imagem, resultado, tom_de_pele, tom_de_cabelo):
     mp_drawing = mp.solutions.drawing_utils
     mp_pose = mp.solutions.pose
 
@@ -78,10 +94,22 @@ def visualizar_resultados(imagem, resultado, tom_de_pele):
         x2, y2 = min(cx + offset, w), min(cy + offset, h)
         cv2.rectangle(imagem_copy, (x1, y1), (x2, y2), (255, 255, 255), 2)
 
+        # Retângulo do cabelo acima do nariz
+        y1_cb = max(cy - 3 * offset, 0)
+        y2_cb = max(cy - offset, 0)
+        x1_cb = max(cx - offset, 0)
+        x2_cb = min(cx + offset, w)
+        cv2.rectangle(imagem_copy, (x1_cb, y1_cb), (x2_cb, y2_cb), (0, 255, 255), 2)
+
     # Caixinha com a cor média do tom de pele
-    tom = tuple([int(c) for c in tom_de_pele])
-    cv2.rectangle(imagem_copy, (10, 10), (110, 110), tom, -1)
-    cv2.putText(imagem_copy, "Tom de pele", (10, 130), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1)
+    tom_pele = tuple([int(c) for c in tom_de_pele])
+    cv2.rectangle(imagem_copy, (10, 10), (110, 110), tom_pele, -1)
+    cv2.putText(imagem_copy, "Tom de pele", (10, 130), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
+
+    # Caixinha com a cor média do tom de cabelo logo abaixo
+    tom_cabelo = tuple([int(c) for c in tom_de_cabelo])
+    cv2.rectangle(imagem_copy, (10, 150), (110, 250), tom_cabelo, -1)
+    cv2.putText(imagem_copy, "Tom de cabelo", (10, 270), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
 
     # Mostra a imagem
     cv2.imshow("Visualizacao", imagem_copy)
