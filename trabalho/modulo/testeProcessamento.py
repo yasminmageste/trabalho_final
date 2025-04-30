@@ -3,8 +3,7 @@ from tkinter import filedialog
 from tkinter import Tk
 import cv2
 from processamento import extrair_dados_da_imagem, visualizar_resultados
-from recomendacao import recomendar_roupas
-from interface import mostrar_interface
+
 
 if __name__ == "__main__":
     # Cria a janela para escolher o arquivo
@@ -27,4 +26,9 @@ if __name__ == "__main__":
                 print(f'{k}:{v}')
 
             if 'tom_de_pele' in medidas:
-                visualizar_resultados(imagem, resultado, medidas['tom_de_pele'], medidas['tom_de_cabelo'])
+                tom_de_cabelo = medidas.get('tom_de_cabelo', None)
+                visualizar_resultados(imagem,
+                                      resultado,
+                                      medidas['tom_de_pele'],
+                                      medidas['pouco_cabelo'],
+                                      tom_de_cabelo)
