@@ -1,7 +1,7 @@
 import cv2  # manipula imagens_roupas
 import mediapipe as mp  # detecta as partes do corpo
 import numpy as np
-import matplotlib.pyplot as plt
+
 
 medidas = {}
 def extrair_dados_da_imagem(imagem):
@@ -23,7 +23,7 @@ def extrair_dados_da_imagem(imagem):
         resultado = pose.process(img_rgb)
         resultado_face = face_mesh.process(img_rgb)
 
-    # CORPO =================================
+    # ================================= CORPO =================================
     if resultado.pose_landmarks:
         try:
             # ALTURA TOTAL (CABEÇA AO TORNOZELO)
@@ -83,7 +83,7 @@ def extrair_dados_da_imagem(imagem):
 
     cv2.imshow("Imagem de Entrada", imagem)
 
-    # ROSTO  =================================
+    # ================================= ROSTO  =================================
     h, w, _ = imagem.shape
     # NARIZ COMO CENTRO
     nariz = None
@@ -96,20 +96,9 @@ def extrair_dados_da_imagem(imagem):
         cx, cy = int(nariz_face.x * w), int(nariz_face.y * h)
     else:
         print("Não foi possível localizar o nariz.")
-        
-    # ÁREA AO REDOR DO NARIZ
-    offset = 15
-    x1, y1 = max(cx - offset, 0), max(cy - offset, 0)
-    x2, y2 = min(cx + offset, w), min(cy + offset, h)
-    rosto = imagem[y1:y2, x1:x2]
-
-    if rosto.size > 0:
-        tom_medio = np.mean(rosto, axis=(0, 1))  # BGR
-    else:
-        print('Não foi possível extrair o tom de pele')
 
     # DEFINIR ROI (zoom 3x ao redor do nariz)
-    zoom_factor = 3  
+    zoom_factor = 3
     roi_size = 150  # TAMANHO (pixels)
     x1 = max(cx - roi_size // 2, 0)
     y1 = max(cy - roi_size // 2, 0)
@@ -135,17 +124,17 @@ def extrair_dados_da_imagem(imagem):
             if resultado_face.multi_face_landmarks:
                 face_landmarks = resultado_face.multi_face_landmarks[0]
 
-                ponto_nariz = face_landmarks.landmark[4] #ponta do nariz
+                ponto_nariz = face_landmarks.landmark[4]  # ponta do nariz
                 h_roi, w_roi, _ = roi_ampliada.shape
                 x_nose, y_nose = int(ponto_nariz.x * w_roi), int(ponto_nariz.y * h_roi)
 
-                offset = 8  # Reduzido para área mais precisa
+                offset = 8  # área mais precisa
                 x1 = max(x_nose - offset, 0)
                 y1 = max(y_nose - offset, 0)
-                x2 = min(x_nose + offset, w_roi) 
+                x2 = min(x_nose + offset, w_roi)
                 y2 = min(y_nose + offset, h_roi)
 
-                coordenadas_roi = (x1, y1, x2, y2) # Salva para usar no rosto saturado
+                coordenadas_roi = (x1, y1, x2, y2)  # salva para usar no rosto saturado
                 regiao_pele = roi_ampliada[y1:y2, x1:x2]
 
                 if regiao_pele.size > 0:
@@ -163,7 +152,8 @@ def extrair_dados_da_imagem(imagem):
                     cv2.rectangle(debug_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
             else:
                 print("Landmarks faciais não detectados.")
-    # CABELO =================================
+
+    # =================================CABELO =================================
     if face_landmarks:
         try:
             h_roi, w_roi, _ = roi_ampliada.shape
@@ -195,7 +185,7 @@ def extrair_dados_da_imagem(imagem):
             kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))
             mask_rosto = cv2.dilate(mask_rosto, kernel)
 
-            # ROSTO - MÁSCARA ESCURA
+            # ISOLA A MASCARA DO CABELO
             mask_cabelo_total = cv2.bitwise_or(mask_loiro, mask_escura)
             mask_cabelo = cv2.subtract(mask_cabelo_total, mask_rosto)
 
@@ -211,25 +201,9 @@ def extrair_dados_da_imagem(imagem):
                 mascara_final = np.zeros_like(gray)
                 cv2.drawContours(mascara_final, [maior_contorno], -1, 255, -1)
 
-                media_hsv = cv2.mean(hsv, mask=mascara_final)
-                if media_hsv[1] < 25 or media_hsv[2] > 245:
-                    # Saturação baixa ou brilho muito alto -> provável fundo
-                    print("Descartado: cor muito clara (fundo ou pele)")
-                    medidas['pouco_cabelo'] = True
-                else:
-                    media_bgr = cv2.mean(roi_ampliada, mask=mascara_final)[:3]
-                    medidas['tom_de_cabelo'] = np.array(media_bgr).astype(int)
-
-                # EXTRAIR PIXELS DO CABELO
-                pixels_cabelo = cv2.bitwise_and(roi_ampliada, roi_ampliada, mask=mascara_final)
-                media_cabelo = cv2.mean(pixels_cabelo, mask=mascara_final)[:3]
-                medidas['tom_de_cabelo'] = np.array(media_cabelo).astype(int)
-                medidas['pouco_cabelo'] = False
-
                 # MOSTRA IMAGEM
                 cv2.drawContours(debug_img, [maior_contorno], -1, (0, 255, 0), 2)
                 cv2.line(debug_img, (0, ponto_queixo[1] - 10), (w_roi, ponto_queixo[1] - 10), (0, 0, 255), 2)
-                #cv2.imshow("Região Analisada - Cabelo", debug_img)
                 area_cabelo = cv2.countNonZero(mascara_final)
                 limite_area_minima = 500  # Ajuste conforme seus testes (valor empírico)
 
@@ -249,7 +223,8 @@ def extrair_dados_da_imagem(imagem):
         except Exception as e:
             print(f"Erro na análise de cabelo: {str(e)}")
             medidas['pouco_cabelo'] = True
-    # OLHO ==============================
+
+    # ================================= OLHO =================================
     olho_esquerdo = [33, 133]
     olho_direito = [362, 263]
 
@@ -268,7 +243,6 @@ def extrair_dados_da_imagem(imagem):
 
         # EXTRAI A COR DO OLHO
         eye_region = roi_ampliada[min_y - 5: max_y + 5, min_x - 5: max_x + 5]
-        #cv2.imshow('Olho analisado', eye_region.copy())
 
         # CALCULA A MÉDIA
         average_color = np.mean(eye_region, axis=(0, 1))
@@ -278,8 +252,7 @@ def extrair_dados_da_imagem(imagem):
         cv2.rectangle(debug_img, (min_x, min_y), (max_x, max_y), (0, 255, 0), 1)
         cv2.imshow("Rosto analisado", debug_img)
 
-
-    # CONTRASTE =====================================================================================
+    # =================================CONTRASTE =================================
     def bgr_to_gray_scale_0_10(bgr):
         gray = int(0.114 * bgr[0] + 0.587 * bgr[1] + 0.299 * bgr[2])
         escala = np.clip(round(gray / 255 * 10), 0, 10)
@@ -290,7 +263,7 @@ def extrair_dados_da_imagem(imagem):
         escala_pele = bgr_to_gray_scale_0_10(medidas['tom_de_pele'])
         escala_cabelo = bgr_to_gray_scale_0_10(medidas['tom_de_cabelo'])
         escala_olhos = bgr_to_gray_scale_0_10(medidas['tom_de_olho'])
-    else: #caso a pessoa não tenha cabelo ou tenha o cabelo com tom semelhante a pele
+    else:  # caso a pessoa não tenha cabelo ou tenha o cabelo com tom semelhante a pele
         escala_pele = bgr_to_gray_scale_0_10(medidas['tom_de_pele'])
         escala_cabelo = escala_pele
         escala_olhos = bgr_to_gray_scale_0_10(medidas['tom_de_olho'])
@@ -319,7 +292,7 @@ def extrair_dados_da_imagem(imagem):
     medidas["Intervalo de contraste"] = intervalo
     medidas["Classificação"] = contraste
 
-    # MOSTRA A IMAGEM DO ROSTO COM MAIOR VIBRAÇÃO
+    # ================================= ROSTO COM MAIOR VIBRAÇÃO =================================
     def vibrance_contraste_suave(roi_ampliada):
         lab = cv2.cvtColor(roi_ampliada, cv2.COLOR_BGR2LAB)
         l, a, b = cv2.split(lab)
@@ -365,7 +338,7 @@ def extrair_dados_da_imagem(imagem):
         cv2.rectangle(debug_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
         cv2.imshow("Rosto novo", debug_img)
 
-    # COMPARANDO RESULTADOS ==============================================================
+    # ================================= COMPARANDO RESULTADOS =================================
     # SUBTONS DE REFERÊNCIA
     subtons_bgr = {
         "baixo contraste escuro": {
@@ -459,7 +432,7 @@ def visualizar_resultados(imagem, resultado, tom_de_pele=None, pouco_cabelo=None
 
     y_atual = 60  # controle da posição vertical
 
-    # TOM DE PELE ==========
+    # ========== TOM DE PELE ==========
     cv2.putText(painel_resultados, "Tom de pele:", (20, y_atual + 10),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
     cv2.rectangle(painel_resultados, (20, y_atual + 20), (120, y_atual + 100),
@@ -469,7 +442,7 @@ def visualizar_resultados(imagem, resultado, tom_de_pele=None, pouco_cabelo=None
 
     y_atual += 140
 
-    # TOM DE CABELO ==========
+    # ========== TOM DE CABELO ==========
     cv2.putText(painel_resultados, "Tom de cabelo:", (20, y_atual + 10),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 1)
 
@@ -484,7 +457,7 @@ def visualizar_resultados(imagem, resultado, tom_de_pele=None, pouco_cabelo=None
 
     y_atual += 160
 
-    # TOM DE OLHO ==========
+    # ========== TOM DE OLHO ==========
     cv2.putText(painel_resultados, "Tom de olho:", (20, y_atual + 10),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
     cv2.rectangle(painel_resultados, (20, y_atual + 20), (120, y_atual + 100),
@@ -500,3 +473,4 @@ def visualizar_resultados(imagem, resultado, tom_de_pele=None, pouco_cabelo=None
     cv2.imshow("Analise Corporal", imagem_final)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+    
