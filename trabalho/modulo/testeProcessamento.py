@@ -31,4 +31,6 @@ if __name__ == "__main__":
                                       resultado,
                                       medidas['tom_de_pele'],
                                       medidas['pouco_cabelo'],
-                                      tom_de_cabelo)
+                                      tom_de_cabelo,
+                                      medidas['tom_de_olho'])
+
