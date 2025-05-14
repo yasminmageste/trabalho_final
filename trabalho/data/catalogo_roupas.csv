@@ -1,3 +1,4 @@
 nome,tipo,contraste,estação,cor bgr,imagem
 camisa azul escuro,camisa,contraste alto/contraste médio,inverno puro,[146 28 63],imagem
-camisa azul escuro,camisa,contraste médio,inverno brilhante,[146 28 63],imagem
+camisa azul escuro,camisa,contraste alto/contraste médio,inverno brilhante,[146 28 63],imagem
+---,camisa,contraste alto/contraste médio,inverno brilhante,[],imagem
