@@ -24,22 +24,45 @@ def recomendar_roupas(dicionario):
     classificacao = dicionario.get('Classificação', '').lower()
     subtom = dicionario.get('Subtom', '').lower()
 
-    if "baixo contraste escuro" in classificacao:
-        roupas_filtradas = roupas_filtradas[
-            roupas_filtradas['contraste'].str.contains("baixo contraste escuro", case=False)]
-    elif "baixo contraste claro" in classificacao:
-        roupas_filtradas = roupas_filtradas[
-            roupas_filtradas['contraste'].str.contains("baixo contraste claro", case=False)]
+       if "quente" in subtom:
+      if 'baixo contraste claro' in classificação:
+        #primavera clara
+         roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("primavera clara", case=False)]
+      elif 'baixo contraste escuro' in classificação:
+        #outono suave
+         roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("outono suave", case=False)]
+      elif 'alto contraste claro' in classificação:
+        #primavera brilhante
+         roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("primavera brilhante", case=False)]
+      elif 'alto contraste escuro' in classificação:
+        #outono profundo
+         roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("outono profundo", case=False)]
+      elif 'medio contraste claro' in classificação:
+        #primavera pura
+         roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("primavera pura", case=False)]
+      elif 'medio contraste escuro' in classificação:
+        #outono puro
+         roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("outono puro", case=False)]
     else:
-        if "quente" in subtom:
-            roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("quente", case=False)]
-        elif "frio" in subtom:
-            roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("frio|inverno", case=False)]
-        elif "neutro" in subtom:
-            roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("neutro", case=False)]
-        else:
-            print("⚠️ Nenhuma condição atendida, mantendo todas as roupas.")
-            roupas_filtradas = catalogo.copy()
+      if 'baixo contraste claro' in classificação:
+        #verão suave
+         roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("verão suave", case=False)]
+      elif 'baixo contraste escuro' in classificação:
+        #inverno puro
+         roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("inverno puro", case=False)]
+      elif 'alto contraste claro' in classificação:
+        #verao puro
+         roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("verao puro", case=False)]
+      elif 'alto contraste escuro' in classificação:
+        #inverno brilhante
+         roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("inverno brilhante", case=False)]
+      elif 'medio contraste claro' in classificação:
+        #verao claro
+         roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("verao claro", case=False)]
+      elif 'medio contraste escuro' in classificação:
+        #inverno profundo
+         roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("inverno profundo", case=False)]
+        
 
     # DEBUG: Mostra valores únicos das colunas de filtragem
     print("\n🧪 Valores únicos de 'contraste':", catalogo['contraste'].unique())
