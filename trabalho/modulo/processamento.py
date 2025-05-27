@@ -465,6 +465,46 @@ def visualizar_resultados(imagem, resultado, tom_de_pele=None, pouco_cabelo=None
     cv2.putText(painel_resultados, f"RGB: {list(tom_de_olho)}", (20, y_atual + 120),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
 
+    # ======= FORMATO DE ROSTO =======
+    def calcular_distância(p1, p2):
+        return np.linalg.norm(np.array(p1) - np.array(p2))
+
+    if resultado_face.multi_face_landmarks:
+        for rosto in resultado.multi_face_landmarks:
+            h, w, _ = imagem .shape
+            pontos = [(int(p.x * w), int(p.y * h)) for p in rosto.landmark]
+            #Pontos principais
+            topo_testa = pontos [10]
+            queixo = pontos[152]
+            mandibula_esq = pontos[234]
+            mandibula_dir = pontos[454]
+            lateral_testa_esq = pontos[127]
+            lateral_testa_dir = pontos [356]
+            #medidas principais
+            altura_rosto = calcular_distancia(topo_testa, queixo)
+            largura_mandibula = calcular_distancia(mandibula_esq, mandibula_dir)
+            largura_testa calcular distancia(lateral_testa_esq, lateral_testa_dir)
+            #Classificação simples
+            prop = (altura_rosto / largura_mandibula)
+
+            if largura_testa > largura_mandibula and prop > 1.3:
+                formato = 'coração'
+            elif abs(largura_testa - largura_mandibula) < 15 and prop >1.3:
+                formato = 'oval'
+            elif abs(largura_testa - largura_mandibula) < 15 prop < 1.2 :
+                formato = 'redondo'
+            else:
+                formato = 'quadrado'
+
+
+            print(f'Formato do rosto detectado: {formato}')
+    else:
+        print('nenhum rosto detectado')
+    
+            
+
+        
+
     # COMBINA AS IMAGEMS HORIZONTALMENTE
     imagem_final = np.hstack((imagem_landmarks, painel_resultados))
 
