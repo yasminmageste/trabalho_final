@@ -342,6 +342,7 @@ def main():
         st.header("📋 Instruções")
         st.markdown("""
         **Para melhores resultados:**
+        - Coloque uma foto de corpo inteiro
         - Use uma foto com boa iluminação natural
         - Certifique-se de que o rosto está bem visível
         - Evite filtros ou edições na imagem
