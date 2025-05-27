@@ -281,9 +281,16 @@ def extrair_dados_da_imagem(imagem):
         else:
             contraste = "baixo contraste claro"
     elif intervalo <= 5:
-        contraste = "contraste médio"
+        if escala_pele <= 6:
+            contraste = "médio contraste escuro"
+        else:
+            contraste = "médio contraste claro"
     else:
-        contraste = "alto contraste"
+        if escala_pele <= 6:
+            contraste = "alto contraste escuro"
+        else:
+            contraste = "alto contraste claro"
+        
 
     # ADICIONA NO DICIONÁRIO
     medidas["Tom de pele (escala 0-10)"] = escala_pele
