@@ -354,7 +354,7 @@ def main():
         Esta ferramenta analisa:
         - Tom de pele, cabelo e olhos
         - Contraste facial
-        - Subtom (quente/frio/neutro)
+        - Subtom (quente/frio/neutro/oliva)
         - Recomendações de cores para roupas
         """)
 
