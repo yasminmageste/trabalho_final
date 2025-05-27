@@ -382,7 +382,7 @@ def extrair_dados_da_imagem(imagem):
     def classificar_subtom(bgr_input):
         if medidas["Classificação"] == "baixo contraste escuro":
             subtons_select = subtons_bgr["baixo contraste escuro"]
-        if medidas["Classificação"] == "baixo contraste claro":
+        elif medidas["Classificação"] == "baixo contraste claro":
             subtons_select = subtons_bgr["baixo contraste claro"]
         else:
             subtons_select = subtons_bgr["medio contraste"]
@@ -447,6 +447,30 @@ def extrair_dados_da_imagem(imagem):
     
     return medidas, resultado
 
+
+#============ INTENSIDADE ==============
+    def intensidade_saturacao(bgr):
+        hsv = cv2.cvtColor(np.uint8([[bgr]]), cv2.COLOR_BGR2HSV)
+        return hsv[0, 0, 1]  # Saturação varia de 0 a 255
+
+s_p = intensidade_saturacao(tom_de_pele)
+s_o = intensidade_saturacao(tom_de_olho)
+s_c = intensidade_saturacao(tom_de_cabelo) if tom_de_cabelo is not None else s_p  # fallback
+
+# Peso maior na pele
+intensidade_media = (0.5 * s_p + 0.3 * s_o + 0.2 * s_c)
+
+if intensidade_media >= 140:
+    intensidade = "Alta"
+elif intensidade_media >= 90:
+    intensidade = "Média"
+else:
+    intensidade = "Baixa"
+
+medidas['Intensidade'] = intensidade
+medidas['Valor Saturação'] = int(intensidade_media)
+
+
 def visualizar_resultados(imagem, resultado, tom_de_pele=None, pouco_cabelo=None, tom_de_cabelo=None, tom_de_olho=None):
     mp_drawing = mp.solutions.drawing_utils
     mp_pose = mp.solutions.pose
@@ -505,6 +529,13 @@ def visualizar_resultados(imagem, resultado, tom_de_pele=None, pouco_cabelo=None
                   tuple([int(c) for c in tom_de_olho]), -1)
     cv2.putText(painel_resultados, f"RGB: {list(tom_de_olho)}", (20, y_atual + 120),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
+
+    # ====== intensidade ========
+    y_atual += 160
+    cv2.putText(painel_resultados, f"Intensidade: {intensidade}", (20, y_atual),
+            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 1)
+
+
 
     # COMBINA AS IMAGEMS HORIZONTALMENTE
     imagem_final = np.hstack((imagem_landmarks, painel_resultados))
