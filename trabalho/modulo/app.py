@@ -247,8 +247,6 @@ def gerar_recomendacoes_web(dicionario):
         for _, row in roupas_filtradas.iterrows():
             if 'cor bgr' in row and isinstance(row['cor bgr'], list) and len(row['cor bgr']) == 3:
                 cores_bgr.append(row['cor bgr'])
-            if len(cores_bgr) >= 20:
-                break
 
         return cores_bgr
 
@@ -374,7 +372,7 @@ def main():
 
         with col1:
             st.subheader("📸 Imagem Enviada")
-            st.image(image, caption="Sua foto", use_column_width=True)
+            st.image(image, caption="Sua foto", use_container_width=True)
 
         with col2:
             st.subheader("🔍 Análise")
@@ -530,12 +528,6 @@ def main():
         # Complete dictionary (expandable)
         with st.expander("📋 Ver Dicionário Completo de Análise"):
             st.json(st.session_state.medidas)
-
-    # Footer
-    st.divider()
-    st.markdown("---")
-    st.markdown("**Desenvolvido com ❤️ usando Streamlit**")
-
 
 if __name__ == "__main__":
     main()
