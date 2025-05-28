@@ -140,13 +140,13 @@ def criar_painel_cores(medidas):
 
     # Classification
     if 'Classificação' in medidas:
-        cv2.putText(painel, f"Contraste: {medidas['Classificação']}", (20, y_pos),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 200), 2)
+        cv2.putText(painel, f"Contraste: {medidas['Classificação'].capitalize()}", (20, y_pos),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
         y_pos += 40
 
     if 'Subtom' in medidas:
-        cv2.putText(painel, f"Subtom: {medidas['Subtom']}", (20, y_pos),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 200), 2)
+        cv2.putText(painel, f"Subtom: {medidas['Subtom'].capitalize()}", (20, y_pos),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
 
     return painel
 
@@ -239,8 +239,8 @@ def gerar_recomendacoes_web(dicionario):
             )
 
         # Filter by type (shirts)
-        if 'tipo' in roupas_filtradas.columns:
-            roupas_filtradas = roupas_filtradas[roupas_filtradas["tipo"] == "camisa"]
+        # if 'tipo' in roupas_filtradas.columns:
+        #     roupas_filtradas = roupas_filtradas[roupas_filtradas["tipo"] == "camisa"]
 
         # Extract colors
         cores_bgr = []
@@ -376,69 +376,65 @@ def main():
             st.image(image, caption="Sua foto", use_container_width=True)
 
         with col2:
-            st.subheader("🔍 Análise")
+            st.subheader("📊 Resultados da Análise")
 
             if not PROCESSAMENTO_AVAILABLE:
                 st.error(
                     "Módulo de processamento não disponível. Verifique se o arquivo 'processamento.py' está presente.")
-                return
+                st.stop()  # Use stop() em vez de return para interromper a execução
 
-            if st.button("🔍 Analisar Imagem", type="primary", use_container_width=True):
-                with st.spinner("Analisando sua coloração pessoal..."):
-                    try:
-                        # Convert PIL to OpenCV
-                        cv_image = pil_to_opencv(image)
+            # Executa a análise automaticamente
+            with st.spinner("Analisando sua coloração pessoal..."):
+                try:
+                    # Convert PIL to OpenCV
+                    cv_image = pil_to_opencv(image)
 
-                        # Call your analysis function
-                        medidas, resultado = extrair_dados_da_imagem(cv_image)
+                    # Call your analysis function
+                    medidas, resultado = extrair_dados_da_imagem(cv_image)
 
-                        # Create visualizations
-                        visualizacoes = criar_visualizacoes(cv_image, medidas, resultado)
+                    # Create visualizations
+                    visualizacoes = criar_visualizacoes(cv_image, medidas, resultado)
 
-                        # Store in session_state
-                        st.session_state.medidas = medidas
-                        st.session_state.visualizacoes = visualizacoes
-                        st.session_state.analysis_complete = True
+                    # Store in session_state
+                    st.session_state.medidas = medidas
+                    st.session_state.visualizacoes = visualizacoes
+                    st.session_state.analysis_complete = True
 
-                        st.success("✅ Análise concluída!")
 
-                    except Exception as e:
-                        st.error(f"Erro na análise: {str(e)}")
-                        st.code(traceback.format_exc())
+                except Exception as e:
+                    st.error(f"Erro na análise: {str(e)}")
+                    st.code(traceback.format_exc())
 
-    # Display results if they exist
-    if st.session_state.get('analysis_complete', False) and 'medidas' in st.session_state:
-        st.divider()
 
-        # Section 1: Analysis results
-        st.subheader("📊 Resultados da Análise")
+            # Display results if they exist - MOVED INSIDE COL2
+            if st.session_state.get('analysis_complete', False) and 'medidas' in st.session_state:
 
-        col1, col2 = st.columns(2)
+                col_res1, col_res2 = st.columns(2)
 
-        with col1:
-            st.markdown("### 🧍 Medidas Corporais")
-            medidas_corporais = {
-                k: v for k, v in st.session_state.medidas.items()
-                if k in ['altura_total', 'largura_ombros', 'largura_quadril', 'proporção', 'tipo_corpo']
-            }
-            if medidas_corporais:
-                for key, value in medidas_corporais.items():
-                    st.metric(key.replace('_', ' ').title(), value)
-            else:
-                st.info("Medidas corporais não detectadas")
+                with col_res1:
+                    st.markdown("### 🧍 Medidas Corporais")
+                    medidas_corporais = {
+                        k: v for k, v in st.session_state.medidas.items()
+                        if k in ['altura_total', 'largura_ombros', 'largura_quadril', 'proporção', 'tipo_corpo']
+                    }
+                    if medidas_corporais:
+                        for key, value in medidas_corporais.items():
+                            st.metric(key.replace('_', ' ').title(), value)
+                    else:
+                        st.info("Medidas corporais não detectadas")
 
-        with col2:
-            st.markdown("### 🎨 Análise de Cores")
-            analise_cores = {
-                k: v for k, v in st.session_state.medidas.items()
-                if k in ['Classificação', 'Subtom', 'Tom de pele (escala 0-10)',
-                         'Tom de cabelo (escala 0-10)', 'Tom dos olhos (escala 0-10)']
-            }
-            if analise_cores:
-                for key, value in analise_cores.items():
-                    st.metric(key, value)
-            else:
-                st.info("Análise de cores não disponível")
+                with col_res2:
+                    st.markdown("### 🎨 Análise de Cores")
+                    analise_cores = {
+                        k: v for k, v in st.session_state.medidas.items()
+                        if k in ['Classificação', 'Subtom', 'Tom de pele (escala 0-10)',
+                                 'Tom de cabelo (escala 0-10)', 'Tom dos olhos (escala 0-10)']
+                    }
+                    if analise_cores:
+                        for key, value in analise_cores.items():
+                            st.metric(key, value)
+                    else:
+                        st.info("Análise de cores não disponível")
 
         # Section 2: Visualizations
         st.divider()
