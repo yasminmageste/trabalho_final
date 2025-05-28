@@ -24,7 +24,7 @@ def recomendar_roupas(dicionario):
     classificacao = dicionario.get('Classificação', '').lower()
     subtom = dicionario.get('Subtom', '').lower()
 
-      def classificar_paleta(medidas):
+    def classificar_paleta(medidas):
         subtom = medidas["Subtom"]
         contraste = medidas["Classificação"]
         intensidade = medidas["Intensidade"]
