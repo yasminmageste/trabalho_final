@@ -470,6 +470,28 @@ else:
 medidas['Intensidade'] = intensidade
 medidas['Valor Saturação'] = int(intensidade_media)
 
+# =============== profundidade ==============
+
+def obter_luminosidade(bgr):
+    lab = cv2.cvtColor(np.uint8([[bgr]]), cv2.COLOR_BGR2LAB)
+    return lab[0, 0, 0]  # Luminância (0 a 255)
+
+l_p = obter_luminosidade(tom_de_pele)
+l_o = obter_luminosidade(tom_de_olho)
+l_c = obter_luminosidade(tom_de_cabelo) if tom_de_cabelo is not None else l_p
+
+# Peso maior na pele e cabelo
+luminosidade = (0.5 * l_p + 0.3 * l_c + 0.2 * l_o)
+
+if luminosidade > 160:
+    profundidade = "claro"
+else:
+    profundidade = "escuro"
+
+medidas["Profundidade"] = profundidade
+medidas["Luminosidade Média"] = int(luminosidade)
+
+
 
 def visualizar_resultados(imagem, resultado, tom_de_pele=None, pouco_cabelo=None, tom_de_cabelo=None, tom_de_olho=None):
     mp_drawing = mp.solutions.drawing_utils
