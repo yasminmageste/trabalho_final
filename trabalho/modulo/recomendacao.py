@@ -30,46 +30,53 @@ def recomendar_roupas(dicionario):
         intensidade = medidas["Intensidade"]
         profundidade = medidas["Profundidade"]
 
-    if subtom == "quente":
-        if intensidade == "alta":
-            if profundidade == "claro":
-                return "Primavera Brilhante"
-        if intensidade == "baixa":
-            if profundidade == "escuro":
-                return "Outono Suave"
-            else:
-                return "Primavera Suave"
-        if profundidade == "escuro":
-            return "Outono Profundo"
-        return "Primavera Clara"
+        if subtom == "quente":
+            if intensidade == "alta":
+                if profundidade == "claro":
+                    return "Primavera Brilhante" , roupas_filtradas[roupas_filtradas['estação'].str.contains("primavera brilhante", case=False)]
     
-    elif subtom == "frio":
-        if intensidade == "alta":
-            if contraste == "médio contraste" or "baixo contraste escuro":
-                return "Inverno Brilhante"
-        if intensidade == "baixa":
+            elif intensidade == "baixa":
+                if profundidade == "escuro":
+                    return "Outono Suave", roupas_filtradas[roupas_filtradas['estação'].str.contains("outono suave", case=False)]
+                else:
+                    return "Primavera Suave", roupas_filtradas[roupas_filtradas['estação'].str.contains("primavera suave", case=False)]
+
+            elif intensidade == "media":
+                if profundidade == "claro":
+                    return "Primavera Clara", roupas_filtradas[roupas_filtradas['estação'].str.contains("primavera clara", case=False)]
+                else:
+                    return "Outono Puro", roupas_filtradas[roupas_filtradas['estação'].str.contains("outono puro", case=False)]
+    
+        elif subtom == "frio":
+            if intensidade == "alta":
+                if contraste == "médio contraste" or "baixo contraste escuro":
+                    return "Inverno Brilhante", roupas_filtradas[roupas_filtradas['estação'].str.contains("inverno brilhante", case=False)]
+            elif intensidade == "baixa":
+                if profundidade == "claro":
+                    return "Verão Suave", roupas_filtradas[roupas_filtradas['estação'].str.contains("verão suave", case=False)]
+                else:
+                    return "Inverno Profundo", roupas_filtradas[roupas_filtradas['estação'].str.contains("inverno profundo", case=False)]
+            elif: 
+                if profundidade == "claro":
+                    return "Verão Claro", roupas_filtradas[roupas_filtradas['estação'].str.contains("verão claro", case=False)]
+                else:
+                    return "Inverno Puro", roupas_filtradas[roupas_filtradas['estação'].str.contains("inverno puro", case=False)]
+
+        elif subtom == "neutro":
             if profundidade == "claro":
-                return "Verão Suave"
-            return "Inverno Profundo"
-        if profundidade == "claro":
-            return "Verão Claro"
-        if profundidade == "escuro":
-            return "Inverno Frio"
+                return "Verão Suave", roupas_filtradas[roupas_filtradas['estação'].str.contains("verão suave", case=False)]
+            else:
+                return "Outono Suave", roupas_filtradas[roupas_filtradas['estação'].str.contains("outono suave", case=False)]
 
-    elif subtom == "neutro":
-        if profundidade == "claro":
-            return "Verão Suave"
+        elif subtom == "oliva":
+            if profundidade == "claro":
+                return "Primavera Suave", roupas_filtradas[roupas_filtradas['estação'].str.contains("primavera suave", case=False)]
+            else:
+                return "Outono Profundo", roupas_filtradas[roupas_filtradas['estação'].str.contains("outono profundo", case=False)]
         else:
-            return "Outono Suave"
+            return "Paleta não identificada"
 
-    elif subtom == "oliva":
-        if profundidade == "claro":
-            return "Primavera Suave"
-        else:
-            return "Outono Profundo"
-    else:
-        return "Paleta não identificada"
-
+medidas["Paleta Sazonal"] = classificar_paleta(medidas)[0]
 
     # DEBUG: Mostra valores únicos das colunas de filtragem
     print("\n🧪 Valores únicos de 'contraste':", catalogo['contraste'].unique())
