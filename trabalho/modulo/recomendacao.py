@@ -30,45 +30,47 @@ def recomendar_roupas(dicionario):
         intensidade = medidas["Intensidade"]
         profundidade = medidas["Profundidade"]
 
-    if subtom == "quente":
-        if intensidade == "alta":
-            if profundidade == "claro":
-                return "Primavera Brilhante"
-        if intensidade == "baixa":
+        if subtom == "quente":
+            if intensidade == "alta":
+                if profundidade == "claro":
+                    return "Primavera Brilhante"
+            if intensidade == "baixa":
+                if profundidade == "escuro":
+                    return "Outono Suave"
+                else:
+                    return "Primavera Suave"
             if profundidade == "escuro":
-                return "Outono Suave"
-            else:
-                return "Primavera Suave"
-        if profundidade == "escuro":
-            return "Outono Profundo"
-        return "Primavera Clara"
+                return "Outono Profundo"
+            return "Primavera Clara"
     
-    elif subtom == "frio":
-        if intensidade == "alta":
-            if contraste == "médio contraste" or "baixo contraste escuro":
-                return "Inverno Brilhante"
-        if intensidade == "baixa":
+        elif subtom == "frio":
+            if intensidade == "alta":
+                if contraste == "médio contraste" or "baixo contraste escuro":
+                    return "Inverno Brilhante"
+            if intensidade == "baixa":
+                if profundidade == "claro":
+                    return "Verão Suave"
+                return "Inverno Profundo"
+            if profundidade == "claro":
+                return "Verão Claro"
+            if profundidade == "escuro":
+                return "Inverno Frio"
+
+        elif subtom == "neutro":
             if profundidade == "claro":
                 return "Verão Suave"
-            return "Inverno Profundo"
-        if profundidade == "claro":
-            return "Verão Claro"
-        if profundidade == "escuro":
-            return "Inverno Frio"
+            else:
+                return "Outono Suave"
 
-    elif subtom == "neutro":
-        if profundidade == "claro":
-            return "Verão Suave"
+        elif subtom == "oliva":
+            if profundidade == "claro":
+                return "Primavera Suave"
+            else:
+                return "Outono Profundo"
         else:
-            return "Outono Suave"
+            return "Paleta não identificada"
 
-    elif subtom == "oliva":
-        if profundidade == "claro":
-            return "Primavera Suave"
-        else:
-            return "Outono Profundo"
-    else:
-        return "Paleta não identificada"
+    print(classificar_paletas(medidas))
 
 
     # DEBUG: Mostra valores únicos das colunas de filtragem
