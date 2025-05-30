@@ -83,6 +83,9 @@ def extrair_dados_da_imagem(imagem):
 
     cv2.imshow("Imagem de Entrada", imagem)
 
+
+    cv2.imshow("Imagem de Entrada", imagem)
+
     # ================================= ROSTO  =================================
     h, w, _ = imagem.shape
     # NARIZ COMO CENTRO
@@ -277,20 +280,13 @@ def extrair_dados_da_imagem(imagem):
     # CLASSIFICA O CONTRASTE
     if intervalo <= 3:
         if escala_pele <= 6:
-            contraste = "baixo contraste escuro"
+            contraste = "Baixo contraste escuro"
         else:
-            contraste = "baixo contraste claro"
+            contraste = "Baixo contraste claro"
     elif intervalo <= 5:
-        if escala_pele <= 6:
-            contraste = "médio contraste escuro"
-        else:
-            contraste = "médio contraste claro"
+        contraste = "Contraste médio"
     else:
-        if escala_pele <= 6:
-            contraste = "alto contraste escuro"
-        else:
-            contraste = "alto contraste claro"
-        
+        contraste = "Alto contraste"
 
     # ADICIONA NO DICIONÁRIO
     medidas["Tom de pele (escala 0-10)"] = escala_pele
@@ -349,22 +345,22 @@ def extrair_dados_da_imagem(imagem):
     # SUBTONS DE REFERÊNCIA
     subtons_bgr = {
         "baixo contraste escuro": {
-            "frio": [81, 113, 219],
-            "neutro": [80, 117, 214],
-            "quente": [66, 112, 207],
-            "oliva": [66, 113, 185]
+            "Frio": [81, 113, 219],
+            "Neutro": [80, 117, 214],
+            "Quente": [66, 112, 207],
+            "Oliva": [66, 113, 185]
         },
         "baixo contraste claro": {
-            "frio": [175, 188, 233],
-            "neutro": [180, 196, 231],
-            "quente": [170, 198, 230],
-            "oliva": [180, 205, 235]
+            "Frio": [175, 188, 233],
+            "Neutro": [180, 196, 231],
+            "Quente": [170, 198, 230],
+            "Oliva": [180, 205, 235]
         },
         "medio contraste": {
-            "frio": [138, 169, 255],
-            "neutro": [135, 169, 254],
-            "quente": [114, 158, 246],
-            "oliva": [120, 169, 240]
+            "Frio": [138, 169, 255],
+            "Neutro": [135, 169, 254],
+            "Quente": [114, 158, 246],
+            "Oliva": [120, 169, 240]
         }
     }
 
@@ -380,9 +376,9 @@ def extrair_dados_da_imagem(imagem):
 
     # CLASSIFICAÇÃO DO SUBTOM BASEADO NO BGR DE ENTRADA
     def classificar_subtom(bgr_input):
-        if medidas["Classificação"] == "baixo contraste escuro":
+        if medidas["Classificação"] == "Baixo contraste escuro":
             subtons_select = subtons_bgr["baixo contraste escuro"]
-        elif medidas["Classificação"] == "baixo contraste claro":
+        if medidas["Classificação"] == "Baixo contraste claro":
             subtons_select = subtons_bgr["baixo contraste claro"]
         else:
             subtons_select = subtons_bgr["medio contraste"]
@@ -444,53 +440,51 @@ def extrair_dados_da_imagem(imagem):
 
     else:
         print('Nenhum rosto detectado')
-    
-    return medidas, resultado
 
-
-#============ INTENSIDADE ==============
+    # ============ INTENSIDADE ==============
     def intensidade_saturacao(bgr):
         hsv = cv2.cvtColor(np.uint8([[bgr]]), cv2.COLOR_BGR2HSV)
         return hsv[0, 0, 1]  # Saturação varia de 0 a 255
 
-s_p = intensidade_saturacao(tom_de_pele)
-s_o = intensidade_saturacao(tom_de_olho)
-s_c = intensidade_saturacao(tom_de_cabelo) if tom_de_cabelo is not None else s_p  # fallback
+    s_p = intensidade_saturacao(medidas['tom_de_pele'])
+    s_o = intensidade_saturacao(medidas['tom_de_olho'])
+    s_c = intensidade_saturacao(medidas['tom_de_cabelo']) if medidas['tom_de_cabelo'] is not None else s_p  # fallback
 
-# Peso maior na pele
-intensidade_media = (0.5 * s_p + 0.3 * s_o + 0.2 * s_c)
+    # Peso maior na pele
+    intensidade_media = (0.5 * s_p + 0.3 * s_o + 0.2 * s_c)
 
-if intensidade_media >= 140:
-    intensidade = "Alta"
-elif intensidade_media >= 90:
-    intensidade = "Média"
-else:
-    intensidade = "Baixa"
+    if intensidade_media >= 140:
+        intensidade = "Alta"
+    elif intensidade_media >= 90:
+        intensidade = "Média"
+    else:
+        intensidade = "Baixa"
 
-medidas['Intensidade'] = intensidade
-medidas['Valor Saturação'] = int(intensidade_media)
+    medidas['Intensidade'] = intensidade
+    medidas['Valor Saturação'] = int(intensidade_media)
 
-# =============== profundidade ==============
+    # =============== profundidade ==============
 
-def obter_luminosidade(bgr):
-    lab = cv2.cvtColor(np.uint8([[bgr]]), cv2.COLOR_BGR2LAB)
-    return lab[0, 0, 0]  # Luminância (0 a 255)
+    def obter_luminosidade(bgr):
+        lab = cv2.cvtColor(np.uint8([[bgr]]), cv2.COLOR_BGR2LAB)
+        return lab[0, 0, 0]  # Luminância (0 a 255)
 
-l_p = obter_luminosidade(tom_de_pele)
-l_o = obter_luminosidade(tom_de_olho)
-l_c = obter_luminosidade(tom_de_cabelo) if tom_de_cabelo is not None else l_p
+    l_p = obter_luminosidade(medidas['tom_de_pele'])
+    l_o = obter_luminosidade(medidas['tom_de_olho'])
+    l_c = obter_luminosidade(medidas['tom_de_cabelo']) if medidas['tom_de_cabelo'] is not None else l_p
 
-# Peso maior na pele e cabelo
-luminosidade = (0.5 * l_p + 0.3 * l_c + 0.2 * l_o)
+    # Peso maior na pele e cabelo
+    luminosidade = (0.5 * l_p + 0.3 * l_c + 0.2 * l_o)
 
-if luminosidade > 160:
-    profundidade = "claro"
-else:
-    profundidade = "escuro"
+    if luminosidade > 160:
+        profundidade = "Claro"
+    else:
+        profundidade = "Escuro"
 
-medidas["Profundidade"] = profundidade
-medidas["Luminosidade Média"] = int(luminosidade)
+    medidas["Profundidade"] = profundidade
+    medidas["Luminosidade Média"] = int(luminosidade)
 
+    return medidas, resultado
 
 
 def visualizar_resultados(imagem, resultado, tom_de_pele=None, pouco_cabelo=None, tom_de_cabelo=None, tom_de_olho=None):
@@ -552,13 +546,6 @@ def visualizar_resultados(imagem, resultado, tom_de_pele=None, pouco_cabelo=None
     cv2.putText(painel_resultados, f"RGB: {list(tom_de_olho)}", (20, y_atual + 120),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
 
-    # ====== intensidade ========
-    y_atual += 160
-    cv2.putText(painel_resultados, f"Intensidade: {intensidade}", (20, y_atual),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 1)
-
-
-
     # COMBINA AS IMAGEMS HORIZONTALMENTE
     imagem_final = np.hstack((imagem_landmarks, painel_resultados))
 
@@ -567,4 +554,3 @@ def visualizar_resultados(imagem, resultado, tom_de_pele=None, pouco_cabelo=None
     cv2.imshow("Analise Corporal", imagem_final)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-    
