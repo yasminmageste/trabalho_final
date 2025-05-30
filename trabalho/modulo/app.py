@@ -2,11 +2,12 @@ import streamlit as st
 import cv2
 import numpy as np
 import pandas as pd
-from PIL import Image
+from PIL import ImageFont, ImageDraw, Image
 import io
 import base64
 import os
 import traceback
+import glob
 
 # Try to import your custom functions - with error handling
 try:
@@ -108,6 +109,22 @@ def criar_painel_cores(medidas):
     painel = np.full((400, 600, 3), 240, dtype=np.uint8)
     y_pos = 50
 
+    def desenhar_texto_com_acentos(img_cv2, texto, pos, cor=(0, 0, 0), tamanho=20):
+        img_pil = Image.fromarray(cv2.cvtColor(img_cv2, cv2.COLOR_BGR2RGB))
+        draw = ImageDraw.Draw(img_pil)
+        fonte = ImageFont.truetype("arial.ttf", tamanho)
+
+        x, y = pos
+
+        # Apenas dois pontos de contorno leves
+        draw.text((x - 1, y - 1), texto, font=fonte, fill=cor)
+        draw.text((x + 1, y + 1), texto, font=fonte, fill=cor)
+
+        # Texto principal
+        draw.text((x, y), texto, font=fonte, fill=cor)
+
+        return cv2.cvtColor(np.array(img_pil), cv2.COLOR_RGB2BGR)
+
     # Skin tone
     if 'tom_de_pele' in medidas:
         cv2.putText(painel, "Tom de Pele:", (20, y_pos),
@@ -140,8 +157,8 @@ def criar_painel_cores(medidas):
 
     # Classification
     if 'Classificação' in medidas:
-        cv2.putText(painel, f"Contraste: {medidas['Classificação'].capitalize()}", (20, y_pos),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
+        texto = f"Contraste: {medidas['Classificação'].capitalize()}"
+        painel = desenhar_texto_com_acentos(painel, texto, (20, y_pos))
         y_pos += 40
 
     if 'Subtom' in medidas:
@@ -215,22 +232,75 @@ def gerar_recomendacoes_web(dicionario):
         # Recommendation rules
         classificacao = dicionario.get('Classificação', '').lower()
         subtom = dicionario.get('Subtom', '').lower()
+        contraste = dicionario.get('Classificação', '').lower()
+        intensidade = dicionario.get('Intensidade', '').lower()
+        profundidade = dicionario.get('Profundidade', '').lower()
+        estacao = ''
 
-        if "baixo contraste escuro" in classificacao or "baixo contraste claro" in classificacao:
-            if 'contraste' in roupas_filtradas.columns:
-                roupas_filtradas = roupas_filtradas[
-                    roupas_filtradas['contraste'].str.contains("contraste baixo", case=False, na=False)]
-        else:
-            if 'estação' in roupas_filtradas.columns:
-                if "quente" in subtom:
-                    roupas_filtradas = roupas_filtradas[
-                        roupas_filtradas['estação'].str.contains("quente|verão", case=False, na=False)]
-                elif "frio" in subtom:
-                    roupas_filtradas = roupas_filtradas[
-                        roupas_filtradas['estação'].str.contains("frio|inverno", case=False, na=False)]
-                elif "neutro" in subtom:
-                    roupas_filtradas = roupas_filtradas[
-                        roupas_filtradas['estação'].str.contains("puro|pura", case=False, na=False)]
+        if 'estação' in roupas_filtradas.columns:
+            if subtom == "quente":
+                if intensidade == "alta" and profundidade == "claro":
+                        roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("primavera brilhante", case=False, na=False)]
+                        estacao = 'primavera brilhante'
+
+                elif intensidade == "baixa":
+                    if profundidade == "escuro":
+                        roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("outono suave", case=False)]
+                        estacao = 'outono suave'
+                    else:
+                        roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("primavera suave", case=False)]
+                        estacao = 'primavera suave'
+
+
+                elif intensidade == "média":
+                    if profundidade == "claro":
+                        roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("primavera clara", case=False)]
+                        estacao = 'primavera clara'
+                    else:
+                        roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("outono puro", case=False)]
+                        estacao = 'outono puro'
+
+            elif subtom == "frio":
+                if intensidade == "alta" and (contraste == "médio contraste" or "baixo contraste escuro"):
+                    roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("inverno brilhante", case=False)]
+                    estacao = 'inverno brilhante'
+                elif intensidade == "baixa":
+                    if profundidade == "claro":
+                        roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("verão suave", case=False)]
+                        estacao = 'verão suave'
+
+                    else:
+                        roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("inverno profundo", case=False)]
+                        estacao = 'inverno profundo'
+
+                elif intensidade == 'média':
+                    if profundidade == "claro":
+                        roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("verão claro", case=False)]
+                        estacao = 'verão claro'
+
+                    else:
+                        roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("inverno puro", case=False)]
+                        estacao = 'inverno puro'
+
+            elif subtom == "neutro":
+                if profundidade == "claro":
+                    roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("verão suave", case=False)]
+                    estacao = 'verão suave'
+
+                else:
+                    roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("outono suave", case=False)]
+                    estacao = 'outono suave'
+
+            elif subtom == "oliva":
+                if profundidade == "claro":
+                    roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("primavera suave", case=False)]
+                    estacao = 'primavera suave'
+                else:
+                    roupas_filtradas = roupas_filtradas[roupas_filtradas['estação'].str.contains("outono profundo", case=False)]
+                    estacao = 'outono profundo'
+            else:
+                roupas_filtradas = f'Subtom:{subtom}, profundidade: {profundidade}, intensidade {intensidade}'
+                estacao = None
 
         # Convert string "[146 28 63]" to list [146, 28, 63]
         if 'cor bgr' in roupas_filtradas.columns:
@@ -238,21 +308,17 @@ def gerar_recomendacoes_web(dicionario):
                 lambda x: list(map(int, str(x).strip("[]").split())) if pd.notna(x) else [0, 0, 0]
             )
 
-        # Filter by type (shirts)
-        # if 'tipo' in roupas_filtradas.columns:
-        #     roupas_filtradas = roupas_filtradas[roupas_filtradas["tipo"] == "camisa"]
-
         # Extract colors
         cores_bgr = []
         for _, row in roupas_filtradas.iterrows():
             if 'cor bgr' in row and isinstance(row['cor bgr'], list) and len(row['cor bgr']) == 3:
                 cores_bgr.append(row['cor bgr'])
 
-        return cores_bgr
+        return cores_bgr, estacao
 
     except Exception as e:
         st.error(f"Erro ao processar recomendações: {str(e)}")
-        return []
+        return [], None
 
 
 def create_color_palette_report(cores_bgr, medidas):
@@ -299,8 +365,6 @@ def display_color_grid(cores_bgr):
         st.warning("Nenhuma cor encontrada para exibir.")
         return
 
-    st.markdown("### 🎨 Cores Recomendadas para Você")
-
     # Create color grid
     cols_per_row = 5
     rows = len(cores_bgr) // cols_per_row + (1 if len(cores_bgr) % cols_per_row else 0)
@@ -331,6 +395,130 @@ def display_color_grid(cores_bgr):
                     </p>
                     """, unsafe_allow_html=True)
 
+
+def exibir_imagens_roupas(caminho_imagens=r"C:\Users\HOME\PycharmProjects\trabalhoFinal\trabalho\data\imagens_roupas"):
+    """
+    Função para ler e exibir imagens de roupas no Streamlit
+
+    Args:
+        caminho_imagens (str): Caminho para o diretório das imagens
+    """
+
+    # Verificar se o diretório existe
+    if not os.path.exists(caminho_imagens):
+        st.error(f"Diretório não encontrado: {caminho_imagens}")
+        return
+
+    # Extensões de imagem suportadas
+    extensoes = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
+
+    # Buscar todas as imagens no diretório
+    imagens = []
+    try:
+        # Listar todos os arquivos no diretório
+        arquivos = os.listdir(caminho_imagens)
+
+        for arquivo in arquivos:
+            # Verificar se o arquivo tem uma extensão de imagem válida
+            nome, ext = os.path.splitext(arquivo.lower())
+            if ext in extensoes:
+                caminho_completo = os.path.join(caminho_imagens, arquivo)
+                imagens.append(caminho_completo)
+
+        # Remover duplicatas (caso existam)
+        imagens = list(set(imagens))
+        # Ordenar para manter consistência
+        imagens.sort()
+
+    except PermissionError:
+        st.error("Sem permissão para acessar o diretório.")
+        return
+    except Exception as e:
+        st.error(f"Erro ao acessar o diretório: {str(e)}")
+        return
+
+    if not imagens:
+        st.warning("Nenhuma imagem encontrada no diretório especificado.")
+        return
+
+    # Configurações fixas
+    num_colunas = 4
+    largura_imagem = 200
+
+    # Criar layout de colunas para as imagens
+    colunas = st.columns(num_colunas)
+
+    # Exibir as imagens
+    for i, caminho_imagem in enumerate(imagens):
+        try:
+            # Abrir a imagem
+            img = Image.open(caminho_imagem)
+
+            # Calcular coluna atual
+            col_atual = i % num_colunas
+
+            with colunas[col_atual]:
+                # Exibir a imagem
+                st.image(img, width=largura_imagem, use_container_width=False)
+
+        except Exception as e:
+            st.error(f"Erro ao carregar imagem {os.path.basename(caminho_imagem)}: {str(e)}")
+
+
+# def exibir_imagem_individual(
+#         caminho_imagens=r"C:\Users\HOME\PycharmProjects\trabalhoFinal\trabalho\data\imagens_roupas"):
+#     """
+#     Função para exibir uma imagem individual selecionada pelo usuário
+#
+#     Args:
+#         caminho_imagens (str): Caminho para o diretório das imagens
+#     """
+#
+#     if not os.path.exists(caminho_imagens):
+#         st.error(f"Diretório não encontrado: {caminho_imagens}")
+#         return
+#
+#     # Buscar imagens
+#     extensoes = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
+#     imagens = []
+#     try:
+#         arquivos = os.listdir(caminho_imagens)
+#         for arquivo in arquivos:
+#             nome, ext = os.path.splitext(arquivo.lower())
+#             if ext in extensoes:
+#                 caminho_completo = os.path.join(caminho_imagens, arquivo)
+#                 imagens.append(caminho_completo)
+#     except Exception as e:
+#         st.error(f"Erro ao acessar o diretório: {str(e)}")
+#         return
+#
+#     if not imagens:
+#         st.warning("Nenhuma imagem encontrada.")
+#         return
+#
+#     # Criar lista de nomes para o selectbox
+#     nomes_imagens = [os.path.basename(img) for img in imagens]
+#
+#     # Selectbox para escolher a imagem
+#     imagem_selecionada = st.selectbox("Escolha uma imagem:", nomes_imagens)
+#
+#     if imagem_selecionada:
+#         # Encontrar o caminho completo da imagem selecionada
+#         caminho_completo = next(img for img in imagens if os.path.basename(img) == imagem_selecionada)
+#
+#         try:
+#             # Carregar e exibir a imagem
+#             img = Image.open(caminho_completo)
+#
+#             col1, col2, col3 = st.columns([1, 2, 1])
+#             with col2:
+#                 st.image(img, caption=imagem_selecionada, use_column_width=True)
+#
+#                 # Informações da imagem
+#                 st.info(f"Dimensões: {img.size[0]} x {img.size[1]} pixels")
+#
+#         except Exception as e:
+#             st.error(f"Erro ao carregar a imagem: {str(e)}")
 
 def main():
     # Header
@@ -415,7 +603,8 @@ def main():
                     st.markdown("### 🧍 Medidas Corporais")
                     medidas_corporais = {
                         k: v for k, v in st.session_state.medidas.items()
-                        if k in ['altura_total', 'largura_ombros', 'largura_quadril', 'proporção', 'tipo_corpo']
+                        #if k in ['altura_total', 'largura_ombros', 'largura_quadril', 'proporção', 'tipo_corpo']
+                        if k in ['largura_ombros', 'largura_quadril', 'proporção', 'tipo_corpo', 'Formato do rosto']
                     }
                     if medidas_corporais:
                         for key, value in medidas_corporais.items():
@@ -437,70 +626,75 @@ def main():
                         st.info("Análise de cores não disponível")
 
         # Section 2: Visualizations
-        st.divider()
-        st.subheader("🖼️ Visualizações da Análise")
-
-        if 'visualizacoes' in st.session_state:
-            tabs = st.tabs(["📸 Original", "🔍 Landmarks", "🎨 Painel de Cores"])
-
-            with tabs[0]:
-                if 'original' in st.session_state.visualizacoes:
-                    st.image(st.session_state.visualizacoes['original'],
-                             caption="Imagem Original", channels="BGR")
-
-            with tabs[1]:
-                if 'landmarks' in st.session_state.visualizacoes:
-                    st.image(st.session_state.visualizacoes['landmarks'],
-                             caption="Detecção de Landmarks Corporais", channels="BGR")
-
-                    # Add download button for landmarks image
-                    try:
-                        img_data, filename = create_downloadable_image(
-                            st.session_state.visualizacoes['landmarks'],
-                            "landmarks_analysis.png"
-                        )
-                        st.download_button(
-                            label="📥 Baixar Análise de Landmarks",
-                            data=img_data,
-                            file_name=filename,
-                            mime="image/png"
-                        )
-                    except Exception as e:
-                        st.error(f"Erro ao preparar download: {e}")
-                else:
-                    st.info("Landmarks não detectados ou MediaPipe não disponível")
-
-            with tabs[2]:
-                if 'cores' in st.session_state.visualizacoes:
-                    st.image(st.session_state.visualizacoes['cores'],
-                             caption="Análise de Tons", channels="BGR")
-
-                    # Add download button for color analysis
-                    try:
-                        img_data, filename = create_downloadable_image(
-                            st.session_state.visualizacoes['cores'],
-                            "color_analysis.png"
-                        )
-                        st.download_button(
-                            label="📥 Baixar Painel de Cores",
-                            data=img_data,
-                            file_name=filename,
-                            mime="image/png"
-                        )
-                    except Exception as e:
-                        st.error(f"Erro ao preparar download: {e}")
+        # st.divider()
+        # st.subheader("🖼️ Visualizações da Análise")
+        #
+        # if 'visualizacoes' in st.session_state:
+        #     #tabs = st.tabs(["📸 Original", "🔍 Landmarks", "🎨 Painel de Cores"])
+        #     tabs = st.tabs(["🔍 Landmarks", "🎨 Painel de Cores"])
+        #
+        #
+        #     # with tabs[0]:
+        #     #     if 'original' in st.session_state.visualizacoes:
+        #     #         st.image(st.session_state.visualizacoes['original'],
+        #     #                  caption="Imagem Original", channels="BGR")
+        #
+        #     with tabs[0]:
+        #         if 'landmarks' in st.session_state.visualizacoes:
+        #             st.image(st.session_state.visualizacoes['landmarks'],
+        #                      caption="Detecção de Landmarks Corporais", channels="BGR")
+        #
+        #             # Add download button for landmarks image
+        #             try:
+        #                 img_data, filename = create_downloadable_image(
+        #                     st.session_state.visualizacoes['landmarks'],
+        #                     "landmarks_analysis.png"
+        #                 )
+        #                 st.download_button(
+        #                     label="📥 Baixar Análise de Landmarks",
+        #                     data=img_data,
+        #                     file_name=filename,
+        #                     mime="image/png"
+        #                 )
+        #             except Exception as e:
+        #                 st.error(f"Erro ao preparar download: {e}")
+        #         else:
+        #             st.info("Landmarks não detectados ou MediaPipe não disponível")
+        #
+        #     with tabs[1]:
+        #         if 'cores' in st.session_state.visualizacoes:
+        #             st.image(st.session_state.visualizacoes['cores'],
+        #                      caption="Análise de Tons", channels="BGR")
+        #
+        #             # Add download button for color analysis
+        #             try:
+        #                 img_data, filename = create_downloadable_image(
+        #                     st.session_state.visualizacoes['cores'],
+        #                     "color_analysis.png"
+        #                 )
+        #                 st.download_button(
+        #                     label="📥 Baixar Painel de Cores",
+        #                     data=img_data,
+        #                     file_name=filename,
+        #                     mime="image/png"
+        #                 )
+        #             except Exception as e:
+        #                 st.error(f"Erro ao preparar download: {e}")
 
         # Section 3: Clothing recommendations
         st.divider()
-        st.subheader("👗 Recomendações de Roupas")
+        st.subheader("👗 Recomendações de Cores")
 
-        if st.button("🛍️ Gerar Recomendações", type="secondary", use_container_width=True):
+        if st.button("🛍️ Mostrar cores", type="secondary", use_container_width=True):
+            st.session_state.mostrar_cores = True
+
+        if st.session_state.get('mostrar_cores', False):
             with st.spinner("Buscando roupas ideais para você..."):
                 try:
-                    cores_recomendadas = gerar_recomendacoes_web(st.session_state.medidas)
+                    cores_recomendadas, estacao = gerar_recomendacoes_web(st.session_state.medidas)
 
                     if cores_recomendadas:
-                        st.success("✅ Recomendações geradas!")
+                        st.subheader(f"🎨PARABÉNS! A sua estação é {estacao.capitalize()}")
                         display_color_grid(cores_recomendadas)
 
                         # Create downloadable color palette
@@ -515,12 +709,34 @@ def main():
                         except Exception as e:
                             st.error(f"Erro ao criar relatório: {e}")
                     else:
+                        resultado = gerar_recomendacoes_web(st.session_state.medidas)
+                        st.write("Resultado da função:", resultado)
                         st.warning(
                             "⚠️ Nenhuma roupa recomendada encontrada. Verifique se o arquivo CSV do catálogo está disponível.")
 
                 except Exception as e:
                     st.error(f"Erro nas recomendações: {str(e)}")
                     st.code(traceback.format_exc())
+
+        # Section 4: Clothing recommendations
+        st.divider()
+        st.subheader("👗Visualizador de Imagens de Roupas")
+
+        if st.button("🛍️ Mostrar galeria", type="secondary", use_container_width=True):
+            st.session_state.mostrar_galeria = True
+            exibir_imagens_roupas()
+
+        # if st.session_state.get('mostrar_galeria', False):
+        #     # Sidebar para escolher o modo de visualização
+        #     modo = st.sidebar.radio(
+        #         "Modo de visualização:",
+        #         ["Galeria", "Imagem Individual"]
+        #     )
+        #
+        #     if modo == "Galeria":
+        #         exibir_imagens_roupas()
+        #     else:
+        #         exibir_imagem_individual()
 
         # Complete dictionary (expandable)
         with st.expander("📋 Ver Dicionário Completo de Análise"):
