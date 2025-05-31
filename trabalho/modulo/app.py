@@ -685,46 +685,40 @@ def main():
         st.divider()
         st.subheader("👗 Recomendações de Cores")
 
-        if st.button("🛍️ Mostrar cores", type="secondary", use_container_width=True):
-            st.session_state.mostrar_cores = True
+        with st.spinner("Buscando roupas ideais para você..."):
+            try:
+                cores_recomendadas, estacao = gerar_recomendacoes_web(st.session_state.medidas)
 
-        if st.session_state.get('mostrar_cores', False):
-            with st.spinner("Buscando roupas ideais para você..."):
-                try:
-                    cores_recomendadas, estacao = gerar_recomendacoes_web(st.session_state.medidas)
+                if cores_recomendadas:
+                    st.subheader(f"🎨PARABÉNS! A sua estação é {estacao.capitalize()}")
+                    display_color_grid(cores_recomendadas)
 
-                    if cores_recomendadas:
-                        st.subheader(f"🎨PARABÉNS! A sua estação é {estacao.capitalize()}")
-                        display_color_grid(cores_recomendadas)
+                    # Create downloadable color palette
+                    try:
+                        palette_data = create_color_palette_report(cores_recomendadas, st.session_state.medidas)
+                        st.download_button(
+                            label="📥 Baixar Relatório de Cores",
+                            data=palette_data,
+                            file_name="color_palette_report.txt",
+                            mime="text/plain"
+                        )
+                    except Exception as e:
+                        st.error(f"Erro ao criar relatório: {e}")
+                else:
+                    resultado = gerar_recomendacoes_web(st.session_state.medidas)
+                    st.write("Resultado da função:", resultado)
+                    st.warning(
+                        "⚠️ Nenhuma roupa recomendada encontrada. Verifique se o arquivo CSV do catálogo está disponível.")
 
-                        # Create downloadable color palette
-                        try:
-                            palette_data = create_color_palette_report(cores_recomendadas, st.session_state.medidas)
-                            st.download_button(
-                                label="📥 Baixar Relatório de Cores",
-                                data=palette_data,
-                                file_name="color_palette_report.txt",
-                                mime="text/plain"
-                            )
-                        except Exception as e:
-                            st.error(f"Erro ao criar relatório: {e}")
-                    else:
-                        resultado = gerar_recomendacoes_web(st.session_state.medidas)
-                        st.write("Resultado da função:", resultado)
-                        st.warning(
-                            "⚠️ Nenhuma roupa recomendada encontrada. Verifique se o arquivo CSV do catálogo está disponível.")
-
-                except Exception as e:
-                    st.error(f"Erro nas recomendações: {str(e)}")
-                    st.code(traceback.format_exc())
+            except Exception as e:
+                st.error(f"Erro nas recomendações: {str(e)}")
+                st.code(traceback.format_exc())
 
         # Section 4: Clothing recommendations
         st.divider()
         st.subheader("👗Visualizador de Imagens de Roupas")
 
-        if st.button("🛍️ Mostrar galeria", type="secondary", use_container_width=True):
-            st.session_state.mostrar_galeria = True
-            exibir_imagens_roupas()
+        exibir_imagens_roupas()
 
         # if st.session_state.get('mostrar_galeria', False):
         #     # Sidebar para escolher o modo de visualização
